@@ -1,8 +1,7 @@
-import React from 'react';
-import { Formik, useFormik } from 'formik';
+import React, { useState } from 'react';
+import {  useFormik } from 'formik';
 import './App.scss';
 import { CadrItem } from './components/CadrItem';
-import { Inputs } from './components/Inputs';
 import styled from '@emotion/styled'
 import Container from '@mui/material/Container';
 import 
@@ -15,7 +14,6 @@ import
   MenuItem, 
   TextField ,
   Select,
-  InputLabel,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -23,30 +21,46 @@ import CloseIcon from '@mui/icons-material/Close';
 
 function App() {
 
-const[openedModalEdit, setopenedModalEdit] = React.useState(false);
-const[openedModalAdd, setopenedModalAdd] = React.useState(false);
-const[clients, setClients] = React.useState([
-  { id: 1,companyName: 'sushimaster', system: 'iiko'},
-  { id: 2,companyName: 'sushimaster', system: 'Poster'},
-  { id: 3,companyName: 'sushimaster', system: 'E-app'},
-  { id: 4,companyName: 'sushimaster', system: 'E-app'},
+// const [ openedModalEdit, setopenedModalEdit ] = useState(false);
+// const [ openedModalAdd, setopenedModalAdd ] = useState(false);
+const[clients, setClients] = useState([
+  { id: 0, appName: 'sushimaster 1', systemName: 'iiko'},
+  { id: 1, appName: 'sushimaster 2', systemName: 'Poster'},
+  { id: 2, appName: 'sushimaster 3', systemName: 'E-app'},
+  { id: 3, appName: 'sushimaster 4', systemName: 'E-app'},
 ]);
+const [ editClientData, setEditClientData ] = useState(null);
+const [ typeForm, setTypeForm ] = useState(false);
+const [ statusModal, setStatusModal ] = useState(false);
 
-const handleOpenEidt = () => {
-  setopenedModalEdit(!openedModalEdit);
+const openModal = ( type, data ) => {
+  if(type === 'edit'){
+    setEditClientData(data);
+    console.log(data);
+  } else {
+    console.log('add');
+  }
+  setTypeForm(type)
+  setStatusModal(true);
 };
-const handleOpenAdd = () => {
-  setopenedModalAdd(!openedModalAdd);
-};
+
+const closeModal = () => {
+  setStatusModal(false);
+}
+
+
+
 const onAddApp = () => {
   const newApp = {
     id: Math.random().toFixed(2),
-    companyName: formikAdd.values.appName,
-    system: formikAdd.values.systemName,
+    appName: defaultInitialValues.values.appName,
+    systemName: defaultInitialValues.values.systemName,
   }
-  setopenedModalAdd(false)
+  // setopenedModalAdd(false)
+  console.log(defaultInitialValues.values.appName);
   setClients([...clients, newApp])
 }
+
 const onDeleteApp = (id) => {
   const index = clients.findIndex(it => it.id === id);
   
@@ -56,39 +70,33 @@ const onDeleteApp = (id) => {
   console.log(index);
 }
 
-const validate = values => {
-
+const editApp = ( data ) => {
+  const index = clients.findIndex(it => it.appName === data.appName);
+  let list = [...clients];
+  list[index] = data;
+  setClients(list);
 };
-const formikEdit = useFormik({
-  initialValues:{
-    appName: '',
-    systemName: '',
-    token: '',
-    account: '',
-    url: '',
-    user: '',
-    secret: '',
-    organization: '',
-  }, 
-  onSubmit: values => {
-    console.log(JSON.stringify(values, null, 2));
-  },
-});
+console.log(clients);
+const defaultInitialValues = {
+  appName: editClientData ? editClientData.appName : '',
+  systemName: editClientData ? editClientData.systemName : '',
+  token: '',
+  account: '',
+  url: '',
+  user: '',
+  secret: '',
+  organization: '',
+};
 
 const formikAdd = useFormik({
-  initialValues:{
-    appName: '',
-    systemName: '',
-    token: '',
-    account: '',
-    url: '',
-    user: '',
-    secret: '',
-    organization: '',
-  }, 
+  initialValues: defaultInitialValues, 
   onSubmit: values => {
     console.log(JSON.stringify(values, null, 2));
+    if(typeForm === 'edit'){
+      editApp(values)
+    } 
   },
+  enableReinitialize: true,
 });
 
 
@@ -96,7 +104,7 @@ const formikAdd = useFormik({
     <Container fixed>
       <div className='top'>
         <h2>Клиенты</h2>
-        <StyledButtonAdd size='small' onClick={handleOpenAdd}>
+        <StyledButtonAdd size='small' onClick={() => openModal('add')}>
           <AddIcon />
         </StyledButtonAdd>
       </div>
@@ -104,144 +112,32 @@ const formikAdd = useFormik({
         {clients.map((it) => {
           return(
             <CadrItem 
-            id={it.id}
-            companyName={it.companyName}
-            system={it.system}
-            onClick={handleOpenEidt}
-            onDelete={() => onDeleteApp(it.id)}
-            key={it.id}/>
+              id={it.id}
+              appName={it.appName}
+              systemName={it.systemName}
+
+
+              handleOpenEdit={() => openModal('edit', it)}
+
+
+              onDelete={() => onDeleteApp(it.id)}
+              key={it.id}/>
           )
         })}
       </div>
 
-
-      <Modal
-        open={openedModalEdit}
-        onClose={handleOpenEidt}
-        aria-labelledby="child-modal-title"
-        aria-describedby="child-modal-description"
-      >
-       
-        <BoxStyled>
-          <ModalTitleStyled>Редактирование <CloseIcon onClick={handleOpenEidt}/></ModalTitleStyled>
-          <FormStyled onSubmit={formikEdit.handleSubmit}>
-     <FormContainer>
-     <InputStyled>
-     <p>Приложение</p>   
-    <TextField 
-      id="appName"
-      name="appName"
-      value={formikEdit.values.appName}
-      onChange={formikEdit.handleChange}
-    />
-   </InputStyled>
-   <InputStyled>
-   <p>Система</p> 
-   <FormControl fullWidth>
-  <Select
-    id="systemName"
-    name="systemName"
-    labelId="demo-simple-select-label"
-    value={formikEdit.values.systemName}
-    onChange={formikEdit.handleChange}
-  >
-  
-    <MenuItem value={"E-app"}>E-app</MenuItem>
-    <MenuItem value={"Poster"}>Poster</MenuItem>
-    <MenuItem value={"iiko"}>iiko</MenuItem>
-  </Select>
-</FormControl>
-</InputStyled>
-
-{ 
-formikEdit.values.systemName==='Poster' ?
- <>
-<InputStyled>
-     <p>Token</p>   
-    <TextField 
-      id="token"
-      name="token"
-      placeholder='введите'
-      value={formikEdit.values.token}
-      onChange={formikEdit.handleChange}
-    />
-   </InputStyled>
-   <InputStyled>
-   <p>Account</p>   
-  <TextField 
-    placeholder='введите'
-    id="account"
-    name="account"
-    value={formikEdit.values.account}
-    onChange={formikEdit.handleChange}
-  />
- </InputStyled>
-</> 
-
-: 
-formikEdit.values.systemName==='iiko' ? 
- <>
-<InputStyled>
-     <p>URL</p>   
-    <TextField 
-      id="url"
-      name="url"
-      placeholder='введите'
-      value={formikEdit.values.url}
-      onChange={formikEdit.handleChange}
-    />
-   </InputStyled>
-   <InputStyled>
-   <p>User</p>   
-  <TextField 
-    placeholder='введите'
-    id="user"
-    name="user"
-    value={formikEdit.values.user}
-    onChange={formikEdit.handleChange}
-  />
- </InputStyled>
- <InputStyled>
-     <p>Secret</p>   
-    <TextField 
-      id="secret"
-      name="secret"
-      placeholder='введите'
-      value={formikEdit.values.secret}
-      onChange={formikEdit.handleChange}
-    />
-   </InputStyled>
-   <InputStyled>
-   <p>Organization</p>   
-  <TextField 
-    placeholder='введите'
-    id="organization"
-    name="organization"
-    value={formikEdit.values.organization}
-    onChange={formikEdit.handleChange}
-  />
- </InputStyled>
-</> : ''
-} 
-     </FormContainer>
-   
-    
-   <ButtonSubmit type='submit' onClick={onAddApp} variant="contained">Готово</ButtonSubmit> 
-    </FormStyled>
-        </BoxStyled>
-      </Modal>
-
-
-
          <Modal
-        open={openedModalAdd}
-        onClose={handleOpenAdd}
+        open={statusModal}
+        onClose={closeModal}
         aria-labelledby="child-modal-title"
         aria-describedby="child-modal-description"
       >
        
         <BoxStyled>
-          <ModalTitleStyled>Добавить нового клиента<CloseIcon onClick={handleOpenAdd}/></ModalTitleStyled>         
+          <ModalTitleStyled>
+            {typeForm === 'add' ? 'Добавить нового клиента' : 'Редактировать'}
+            <CloseIcon onClick={closeModal}/>
+          </ModalTitleStyled>         
    <FormStyled onSubmit={formikAdd.handleSubmit}>
      <FormContainer>
      <InputStyled>
@@ -344,7 +240,7 @@ formikAdd.values.systemName==='iiko' ?
      </FormContainer>
    
     
-   <ButtonSubmit type='submit' onClick={onAddApp} variant="contained">Готово</ButtonSubmit> 
+   <ButtonSubmit type='submit' variant="contained">Готово</ButtonSubmit> 
     </FormStyled>
         </BoxStyled>
         </Modal>
