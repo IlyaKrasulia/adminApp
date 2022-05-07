@@ -3,7 +3,24 @@ import styled from '@emotion/styled'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ListItem, Button } from '@mui/material';
 
-export const CadrItem = ({ companyName, system, onClick, onDelete }) => {
+export const CadrItem = ({ app, system, handleOpenEdit, onDelete}) => {
+
+
+
+    return(
+        <ListItemStyled disablePadding>
+                <ItemLeft>
+                <TitleCompany>{app.length === 0 ? 'Поле не заполненно' : app}</TitleCompany>
+                <SystemName><span>Система:</span>{system ? system : 'Поле не заполненно'}</SystemName>
+                </ItemLeft>
+                <ItemRight>
+                <EditButton onClick={handleOpenEdit}>Редактировать</EditButton>
+                <EditButton onClick={onDelete}><DeleteOutlineIcon/></EditButton>
+                </ItemRight>
+        </ListItemStyled>
+    )
+}
+
 
 const ListItemStyled = styled(ListItem, {})`
     background-color: #fff;
@@ -46,18 +63,3 @@ const EditButton = styled(Button, {})`
     margin-right: 0;
     }
 `
-
-    return(
-        <ListItemStyled disablePadding>
-                <ItemLeft>
-                <TitleCompany>{companyName}</TitleCompany>
-                <SystemName><span>Система:</span>{system}</SystemName>
-                </ItemLeft>
-                <ItemRight>
-                <EditButton onClick={onClick}>Редактировать</EditButton>
-                <EditButton onClick={onDelete}><DeleteOutlineIcon/></EditButton>
-                </ItemRight>
-        </ListItemStyled>
-    )
-}
-

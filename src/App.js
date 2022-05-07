@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import {  useFormik } from 'formik';
+import React, { useState, useEffect } from 'react';
+import {  Formik, useFormik } from 'formik';
+import axios from 'axios';
 import './App.scss';
 import { CadrItem } from './components/CadrItem';
 import styled from '@emotion/styled'
@@ -20,23 +21,20 @@ import CloseIcon from '@mui/icons-material/Close';
 
 
 function App() {
-
-// const [ openedModalEdit, setopenedModalEdit ] = useState(false);
-// const [ openedModalAdd, setopenedModalAdd ] = useState(false);
-const[clients, setClients] = useState([
-  { id: 0, appName: 'sushimaster 1', systemName: 'iiko'},
-  { id: 1, appName: 'sushimaster 2', systemName: 'Poster'},
-  { id: 2, appName: 'sushimaster 3', systemName: 'E-app'},
-  { id: 3, appName: 'sushimaster 4', systemName: 'E-app'},
-]);
+const [clients, setClients ] = useState([]);
 const [ editClientData, setEditClientData ] = useState(null);
 const [ typeForm, setTypeForm ] = useState(false);
 const [ statusModal, setStatusModal ] = useState(false);
 
+   
+useEffect(() => {
+    axios.get('https://e-admin.com.ua/pay-api/get_clients.php').then(res => {
+      setClients(res.data)
+    })
+}, [])
 const openModal = ( type, data ) => {
   if(type === 'edit'){
     setEditClientData(data);
-    console.log(data);
   } else {
     console.log('add');
   }
@@ -46,19 +44,6 @@ const openModal = ( type, data ) => {
 
 const closeModal = () => {
   setStatusModal(false);
-}
-
-
-
-const onAddApp = () => {
-  const newApp = {
-    id: Math.random().toFixed(2),
-    appName: defaultInitialValues.values.appName,
-    systemName: defaultInitialValues.values.systemName,
-  }
-  // setopenedModalAdd(false)
-  console.log(defaultInitialValues.values.appName);
-  setClients([...clients, newApp])
 }
 
 const onDeleteApp = (id) => {
@@ -71,22 +56,60 @@ const onDeleteApp = (id) => {
 }
 
 const editApp = ( data ) => {
-  const index = clients.findIndex(it => it.appName === data.appName);
+  const index = clients.findIndex(it => it.app === data.app);
   let list = [...clients];
   list[index] = data;
   setClients(list);
+  setStatusModal(false);
 };
-console.log(clients);
+
+const addApp = ( values ) => {
+  console.log(values);
+  const newItem = {
+    "app": formikAdd.values.app,
+    data: {
+      "system": formikAdd.values.system,
+      "url": formikAdd.values.url,
+      "user": formikAdd.values.user,
+      "secret": formikAdd.values.secret,
+      "organization": formikAdd.values.organization,
+      "account": formikAdd.values.account,
+      "token": formikAdd.values.token,
+    }
+    
+  }
+  setClients([...clients, newItem]);
+  setStatusModal(false);
+
+  console.log(newItem, '=>newItem');
+  axios.post('http://e-admin.com.ua/pay-api/add_client.php', newItem)
+
+
+};
 const defaultInitialValues = {
-  appName: editClientData ? editClientData.appName : '',
-  systemName: editClientData ? editClientData.systemName : '',
-  token: '',
-  account: '',
-  url: '',
-  user: '',
-  secret: '',
-  organization: '',
+  app: editClientData ? editClientData.app : '',
+  system: editClientData ? editClientData.system : '',
+  token: editClientData ? editClientData.token : '',
+  account: editClientData ? editClientData.account : '',
+  url: editClientData ? editClientData.url : '',
+  user: editClientData ? editClientData.user : '',
+  secret: editClientData ? editClientData.secret : '',
+  organization: editClientData ? editClientData.organization : '',
 };
+
+// const validate = values => {
+//   const errors = {};
+//   if(values.app.length < 3) {
+//     alert('Названия приложения должно быть как минимум из 3 символов');
+//   };
+//   if(values.app.length > 10) {
+//     alert('Названия приложения должно быть до 10 символов');
+//   };
+//   if(!values.app || !values.system || !values.token || !values.account || !values.url || !values.user || !values.secret || !values.organization){
+//     alert('Заполните все поля')
+//   }
+//   return errors
+// }
 
 const formikAdd = useFormik({
   initialValues: defaultInitialValues, 
@@ -94,11 +117,13 @@ const formikAdd = useFormik({
     console.log(JSON.stringify(values, null, 2));
     if(typeForm === 'edit'){
       editApp(values)
-    } 
+    } else {
+      addApp(values)
+    }
   },
+  // validate,
   enableReinitialize: true,
 });
-
 
   return (
     <Container fixed>
@@ -112,16 +137,11 @@ const formikAdd = useFormik({
         {clients.map((it) => {
           return(
             <CadrItem 
-              id={it.id}
-              appName={it.appName}
-              systemName={it.systemName}
-
-
+              app={it.app}
+              {...it.data}
               handleOpenEdit={() => openModal('edit', it)}
-
-
               onDelete={() => onDeleteApp(it.id)}
-              key={it.id}/>
+              />
           )
         })}
       </div>
@@ -143,9 +163,10 @@ const formikAdd = useFormik({
      <InputStyled>
      <p>Приложение</p>   
     <TextField 
-      id="appName"
-      name="appName"
-      value={formikAdd.values.appName}
+      disabled={typeForm==='edit'?true:false}
+      id="app"
+      name="app"
+      value={formikAdd.values.app}
       onChange={formikAdd.handleChange}
     />
    </InputStyled>
@@ -153,22 +174,22 @@ const formikAdd = useFormik({
    <p>Система</p> 
    <FormControl fullWidth>
   <Select
-    id="systemName"
-    name="systemName"
+    id="system"
+    name="system"
     labelId="demo-simple-select-label"
-    value={formikAdd.values.systemName}
+    value={formikAdd.values.system}
     onChange={formikAdd.handleChange}
   >
   
-    <MenuItem value={"E-app"}>E-app</MenuItem>
-    <MenuItem value={"Poster"}>Poster</MenuItem>
+    <MenuItem value={"E-app"}>e-app</MenuItem>
+    <MenuItem value={"Poster"}>poster</MenuItem>
     <MenuItem value={"iiko"}>iiko</MenuItem>
   </Select>
 </FormControl>
 </InputStyled>
 
 { 
-formikAdd.values.systemName==='Poster' ?
+formikAdd.values.system==='Poster' ?
  <>
 <InputStyled>
      <p>Token</p>   
@@ -193,7 +214,7 @@ formikAdd.values.systemName==='Poster' ?
 </> 
 
 : 
-formikAdd.values.systemName==='iiko' ? 
+formikAdd.values.system==='iiko' ? 
  <>
 <InputStyled>
      <p>URL</p>   
